@@ -10,7 +10,6 @@
           sshd:
             # Unsupported in new versions, but ignored ?
             Protocol: 1
-            UsePrivilegeSeparation: no
             UseLogin: yes
             # Debian only
             DebianBanner: /etc/motd
@@ -25,8 +24,6 @@
             KerberosAuthentication: yes
             GSSAPIStoreCredentialsOnRekey: yes
             # SSHv1 options
-            KeyRegenerationInterval: 1h
-            ServerKeyBits: 1024
             # This one is pretty new, but works on OpenBSD only
             RDomain: 2
         register: role_result

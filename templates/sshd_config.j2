@@ -158,7 +158,6 @@ Match {{ match["Condition"] }}
 {{ body_option("KerberosOrLocalPasswd",sshd_KerberosOrLocalPasswd) -}}
 {{ body_option("KerberosTicketCleanup",sshd_KerberosTicketCleanup) -}}
 {{ body_option("KexAlgorithms",sshd_KexAlgorithms) -}}
-{{ body_option("KeyRegenerationInterval",sshd_KeyRegenerationInterval) -}}
 {{ body_option("LogLevel",sshd_LogLevel) -}}
 {{ body_option("LoginGraceTime",sshd_LoginGraceTime) -}}
 {{ body_option("MACs",sshd_MACs) -}}
@@ -181,14 +180,11 @@ Match {{ match["Condition"] }}
 {{ body_option("PubkeyAcceptedKeyTypes",sshd_PubkeyAcceptedKeyTypes) -}}
 {{ body_option("PubkeyAuthOptions",sshd_PubkeyAuthOptions) -}}
 {{ body_option("PubkeyAuthentication",sshd_PubkeyAuthentication) -}}
-{{ body_option("RSAAuthentication",sshd_RSAAuthentication) -}}
 {{ body_option("RekeyLimit",sshd_RekeyLimit) -}}
 {{ body_option("RevokedKeys",sshd_RevokedKeys) -}}
 {{ body_option("RDomain",sshd_RDomain) -}}
-{{ body_option("RhostsRSAAuthentication",sshd_RhostsRSAAuthentication) -}}
 {{ body_option("SecurityKeyProvider",sshd_SecurityKeyProvider) -}}
 {{ body_option("SetEnv",sshd_SetEnv) -}}
-{{ body_option("ServerKeyBits",sshd_ServerKeyBits) -}}
 {{ body_option("StreamLocalBindMask",sshd_StreamLocalBindMask) -}}
 {{ body_option("StreamLocalBindUnlink",sshd_StreamLocalBindUnlink) -}}
 {{ body_option("StrictModes",sshd_StrictModes) -}}
@@ -200,7 +196,6 @@ Match {{ match["Condition"] }}
 {{ body_option("UseDNS",sshd_UseDNS) -}}
 {{ body_option("UseLogin",sshd_UseLogin) -}}
 {{ body_option("UsePAM",sshd_UsePAM) -}}
-{{ body_option("UsePrivilegeSeparation",sshd_UsePrivilegeSeparation) -}}
 {{ body_option("VersionAddendum",sshd_VersionAddendum) -}}
 {{ body_option("X11DisplayOffset",sshd_X11DisplayOffset) -}}
 {{ body_option("X11MaxDisplays",sshd_X11MaxDisplays) -}}

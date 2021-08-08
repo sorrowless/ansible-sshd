@@ -56,7 +56,6 @@ KerberosGetAFSToken
 KerberosOrLocalPasswd
 KerberosTicketCleanup
 KexAlgorithms
-KeyRegenerationInterval
 LogLevel
 LoginGraceTime
 MACs
@@ -79,14 +78,11 @@ PrintMotd
 PubkeyAcceptedKeyTypes
 PubkeyAuthOptions
 PubkeyAuthentication
-RSAAuthentication
 RekeyLimit
 RevokedKeys
 RDomain
-RhostsRSAAuthentication
 SecurityKeyProvider
 SetEnv
-ServerKeyBits
 StreamLocalBindMask
 StreamLocalBindUnlink
 StrictModes
@@ -98,7 +94,6 @@ TrustedUserCAKeys
 UseDNS
 UseLogin
 UsePAM
-UsePrivilegeSeparation
 VersionAddendum
 X11DisplayOffset
 X11MaxDisplays
