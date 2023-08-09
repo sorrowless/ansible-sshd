@@ -1,70 +1,78 @@
 ---
-- hosts: all
+- name: Test hostkeys
+  hosts: all
+  vars:
+    __sshd_test_backup_files:
+      - /etc/ssh/sshd_config
+      - /etc/ssh/sshd_config.d/00-ansible_system_role.conf
+      - /tmp/ssh_host_rsa_key2
   tasks:
-  - name: Remove host key before the test
-    file:
-      path: /tmp/ssh_host_ed25519_key
-      state: absent
+    - name: "Backup configuration files"
+      ansible.builtin.include_tasks: tasks/backup.yml
 
-  - name: Ensure group 'nobody' exists
-    group:
-      name: nobody
+    - name: Remove host key before the test
+      ansible.builtin.file:
+        path: /tmp/ssh_host_rsa_key2
+        state: absent
 
-  - name: Ensure the user 'nobody' exists
-    user:
-      name: nobody
-      group: nobody
-      comment: nobody
-      create_home: no
-      shell: /sbin/nologin
+    - name: Ensure group 'nobody' exists
+      ansible.builtin.group:
+        name: nobody
 
-  - name: Configure sshd with alternative host keys
-    include_role:
-      name: ansible-sshd
-    vars:
-      # very BAD example
-      sshd_hostkey_owner: "nobody"
-      sshd_hostkey_group: "nobody"
-      sshd_hostkey_mode: "0664"
-      sshd:
-        HostKey:
-          - /tmp/ssh_host_ed25519_key
+    - name: Ensure the user 'nobody' exists
+      ansible.builtin.user:
+        name: nobody
+        group: nobody
+        comment: nobody
+        create_home: false
+        shell: /sbin/nologin
 
-  - name: Verify the options are correctly set
-    vars:
-      main_sshd_config: >-
-        {{
-          "/etc/ssh/sshd_config.d/00-ansible_system_role.conf"
-          if ansible_facts['distribution'] == 'Fedora'
-          else "/etc/ssh/sshd_config"
-        }}
-    block:
-      - meta: flush_handlers
+    - name: Configure sshd with alternative host keys
+      ansible.builtin.include_role:
+        name: ansible-sshd
+      vars:
+        # very BAD example
+        sshd_hostkey_owner: "nobody"
+        sshd_hostkey_group: "nobody"
+        sshd_hostkey_mode: "0664"
+        sshd:
+          HostKey:
+            - /tmp/ssh_host_rsa_key2
 
-      - name: Print current configuration file
-        slurp:
-          src: "{{ main_sshd_config }}"
-        register: config
+    - name: Verify the options are correctly set
+      tags: tests::verify
+      block:
+        - name: Flush handlers
+          ansible.builtin.meta: flush_handlers
 
-      - stat:
-          path: /tmp/ssh_host_ed25519_key
-        register: privkey
+        - name: Print current configuration file
+          ansible.builtin.slurp:
+            src: "{{ main_sshd_config }}"
+          register: config
 
-      - stat:
-          path: /tmp/ssh_host_ed25519_key.pub
-        register: pubkey
+        - name: Get stat of private key
+          ansible.builtin.stat:
+            path: /tmp/ssh_host_rsa_key2
+          register: privkey
 
-      - name: Check the options are in configuration file
-        assert:
-          that:
-            - "'HostKey /tmp/ssh_host_ed25519_key' in config.content | b64decode"
+        - name: Get stat of public key
+          ansible.builtin.stat:
+            path: /tmp/ssh_host_rsa_key2.pub
+          register: pubkey
 
-      - name: Check the generated host key has requested properties
-        assert:
-          that:
-            - privkey.stat.exists
-            - privkey.stat.gr_name == 'nobody'
-            - privkey.stat.pw_name == 'nobody'
-            - privkey.stat.mode == '0664'
-            - pubkey.stat.exists
-    tags: tests::verify
+        - name: Check the options are in configuration file
+          ansible.builtin.assert:
+            that:
+              - "'HostKey /tmp/ssh_host_rsa_key2' in config.content | b64decode"
+
+        - name: Check the generated host key has requested properties
+          ansible.builtin.assert:
+            that:
+              - privkey.stat.exists
+              - privkey.stat.gr_name == 'nobody'
+              - privkey.stat.pw_name == 'nobody'
+              - privkey.stat.mode == '0664'
+              - pubkey.stat.exists
+
+    - name: "Restore configuration files"
+      ansible.builtin.include_tasks: tasks/restore.yml
