@@ -1,16 +1,18 @@
-# {{ ansible_managed }}
 {% macro render_option(key,value,indent=false) %}
 {%   if value is defined %}
-{%     if indent == true %}  {% endif %}
 {%     if value is sameas true %}
+{%     if indent %}  {% endif %}
 {{ key }} yes
 {%     elif value is sameas false %}
+{%     if indent %}  {% endif %}
 {{ key }} no
 {%     elif value is string or value is number %}
-{{ key }} {{ value }}
+{%     if indent %}  {% endif %}
+{{ key }} {{ value | string }}
 {%     else %}
 {%       for i in value %}
-{{ key }} {{ i }}
+{%     if indent %}  {% endif %}
+{{ key }} {{ i | string }}
 {%       endfor %}
 {%     endif %}
 {%   endif %}
@@ -21,8 +23,15 @@
 {%     set value = override %}
 {%   elif sshd[key] is defined %}
 {%     set value = sshd[key] %}
-{%   elif __sshd_defaults[key] is defined and sshd_skip_defaults != true %}
-{%     set value = __sshd_defaults[key] %}
+{%   elif sshd_main_config_file is not none
+       and sshd_config_file | dirname != sshd_main_config_file | dirname %}
+{#     Do not use the defaults from main file to avoid recursion #}
+{%   elif __sshd_defaults[key] is defined and not sshd_skip_defaults %}
+{%     if key == 'HostKey' and __sshd_fips_mode %}
+{%       set value = __sshd_defaults[key] | difference(__sshd_hostkeys_nofips) %}
+{%     else %}
+{%       set value = __sshd_defaults[key] %}
+{%     endif %}
 {%   endif %}
 {{ render_option(key,value) -}}
 {% endmacro %}

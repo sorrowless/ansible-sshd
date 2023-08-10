@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+---
+ignore: |
+  /.tox/
+  /.github/
+  /tests/roles/
+# skip checking line length
+rules:
+  line-length: disable

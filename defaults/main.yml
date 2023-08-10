@@ -37,36 +37,47 @@ sshd_sysconfig_override_crypto_policy: false
 # generator
 sshd_sysconfig_use_strong_rng: 0
 
-
 # Empty dicts to avoid errors
 sshd: {}
 
 # The path to sshd_config file. This is useful when creating an included
 # configuration file snippet or configuring second sshd service
-sshd_config_file: /etc/ssh/sshd_config
+sshd_config_file: "{{ __sshd_config_file }}"
 
 ### VARS DEFAULTS
 ### The following are defaults for OS specific configuration in var files in
-### this role. They should not be set directly by role users.
-sshd_packages: []
-sshd_config_owner: root
-sshd_config_group: root
-sshd_config_mode: "0600"
-sshd_binary: /usr/sbin/sshd
-sshd_service: sshd
-sshd_sftp_server: /usr/lib/openssh/sftp-server
+### this role. They should not be set directly by role users, unless they know
+### what they are doing, e.g. installing extra packages or installing an
+### alternative SystemD service file
+sshd_packages: "{{ __sshd_packages }}"
+sshd_config_owner: "{{ __sshd_config_owner }}"
+sshd_config_group: "{{ __sshd_config_group }}"
+sshd_config_mode: "{{ __sshd_config_mode }}"
+sshd_binary: "{{ __sshd_binary }}"
+sshd_service: "{{ __sshd_service }}"
+sshd_sftp_server: "{{ __sshd_sftp_server }}"
+
+sshd_drop_in_dir_mode: "{{ __sshd_drop_in_dir_mode }}"
+sshd_main_config_file: "{{ __sshd_main_config_file }}"
 
 # This lists by default all hostkeys as rendered in the generated configuration
 # file ("auto"). Before attempting to run sshd (either for verification of
 # configuration or restarting), we make sure the keys exist and have correct
 # permissions. To disable this check, set sshd_verify_hostkeys to false
 sshd_verify_hostkeys: "auto"
-sshd_hostkey_owner: root
-sshd_hostkey_group: root
-sshd_hostkey_mode: "0600"
 
-### These variables are used by role internals and should not be used.
-__sshd_defaults: {}
-__sshd_os_supported: no
-__sshd_sysconfig_supports_crypto_policy: false
-__sshd_sysconfig_supports_use_strong_rng: false
+sshd_hostkey_owner: "{{ __sshd_hostkey_owner }}"
+sshd_hostkey_group: "{{ __sshd_hostkey_group }}"
+sshd_hostkey_mode: "{{ __sshd_hostkey_mode }}"
+
+# instead of replacing the whole configuration file, just add a specified
+# snippet
+sshd_config_namespace: null
+
+# If this option is enabled, the role will configure firewall to open the ports
+# defined in the configuration. This works only on Red Hat based systems.
+sshd_manage_firewall: false
+
+# If this option is enabled, the role will configure selinux to allow sshd to
+# bind the ports defined in the configuration. This works only on Red Hat based systems.
+sshd_manage_selinux: false
