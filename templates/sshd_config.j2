@@ -241,6 +241,7 @@ Match {{ match["Condition"] }}
 {{ body_option("X11Forwarding",sshd_X11Forwarding) -}}
 {{ body_option("X11UseLocalhost",sshd_X11UseLocalhost) -}}
 {{ body_option("XAuthLocation",sshd_XAuthLocation) -}}
+{{ body_option("Subsystem",sshd_Subsystem) -}}
 {% if sshd['Match'] is defined %}
 {{   match_iterate_block(sshd['Match']) -}}
 {% endif %}
