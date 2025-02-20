@@ -15,7 +15,6 @@ __sshd_defaults:
   KbdInteractiveAuthentication: false
   UsePAM: true
   AcceptEnv: LANG LC_*
-  Subsystem: "sftp  /usr/lib/openssh/sftp-server"
 
 __sshd_runtime_directory: /run/sshd
 
