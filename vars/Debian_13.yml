@@ -21,3 +21,4 @@ __sshd_environment_variable:
 __sshd_service_after: nss-user-lookup.target auditd.service
 __sshd_service_alias: sshd
 __sshd_socket_accept: false
+__sshd_google_authenticator_package: libpam-google-authenticator

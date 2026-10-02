@@ -1,0 +1,130 @@
+---
+- name: Look up SSH user passwd entry
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ansible_user }}"
+  register: __ga_user_passwd
+
+- name: Set fact with SSH user home directory
+  ansible.builtin.set_fact:
+    __ga_user_home: "{{ __ga_user_passwd.ansible_facts.getent_passwd[ansible_user][4] }}"
+    __ga_user_name: "{{ ansible_user }}"
+
+- name: Stat ~/.google_authenticator
+  ansible.builtin.stat:
+    path: "{{ __ga_user_home }}/.google_authenticator"
+  register: __ga_file_stat
+
+- name: Assert .google_authenticator exists and has safe permissions
+  ansible.builtin.assert:
+    that:
+      - __ga_file_stat.stat.exists
+      - __ga_file_stat.stat.isreg
+      - __ga_file_stat.stat.pw_name == __ga_user_name
+      - __ga_file_stat.stat.mode in ['0600', '0400']
+
+- name: Read .google_authenticator content
+  ansible.builtin.slurp:
+    src: "{{ __ga_user_home }}/.google_authenticator"
+  register: __ga_file_content
+
+- name: Validate TOTP secret in .google_authenticator
+  ansible.builtin.assert:
+    that:
+      - >-
+        (__ga_file_content.content | b64decode).split('\n')
+        | map('trim') | reject('equalto', '') | list | first
+        is match('^[A-Z2-7]{16,}$')
+
+- name: Check whether oathtool is installed
+  ansible.builtin.command: command -v oathtool
+  register: __ga_oathtool_bin
+  changed_when: false
+  failed_when: false
+
+- name: Validate TOTP generation with oathtool
+  ansible.builtin.command:
+    argv:
+      - oathtool
+      - --totp
+      - -b
+      - >-
+        {{ (__ga_file_content.content | b64decode).split('\n')
+           | map('trim') | reject('equalto', '') | list | first }}
+  register: __ga_oathtool_out
+  changed_when: false
+  when:
+    - __ga_oathtool_bin.rc == 0
+
+- name: Assert oathtool generated a valid TOTP code
+  ansible.builtin.assert:
+    that:
+      - __ga_oathtool_out.stdout is match('^[0-9]{6,8}$')
+  when:
+    - __ga_oathtool_bin.rc == 0
+
+- name: Install Google Authenticator PAM module
+  ansible.builtin.package:
+    name: "{{ __sshd_google_authenticator_package }}"
+    state: present
+    use: "{{ (__sshd_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  when:
+    - sshd_google_authenticator | bool
+
+- name: Configure Google Authenticator PAM
+  ansible.builtin.template:
+    src: pam_sshd_google_authenticator.j2
+    dest: /etc/pam.d/sshd-google-authenticator
+    owner: root
+    group: root
+    mode: "0644"
+  when:
+    - sshd_google_authenticator | bool
+  notify: sshd_reload
+
+- name: Remove Google Authenticator PAM configuration
+  ansible.builtin.file:
+    path: /etc/pam.d/sshd-google-authenticator
+    state: absent
+  when:
+    - not sshd_google_authenticator | bool
+  notify: sshd_reload
+
+- name: Enable Google Authenticator in sshd PAM stack
+  ansible.builtin.blockinfile:
+    path: /etc/pam.d/sshd
+    insertbefore: BOF
+    marker: "# {mark} ANSIBLE MANAGED GOOGLE AUTHENTICATOR"
+    block: |
+      @include sshd-google-authenticator
+  when:
+    - sshd_google_authenticator | bool
+  notify: sshd_reload
+
+- name: Disable Google Authenticator in sshd PAM stack
+  ansible.builtin.blockinfile:
+    path: /etc/pam.d/sshd
+    marker: "# {mark} ANSIBLE MANAGED GOOGLE AUTHENTICATOR"
+    state: absent
+  when:
+    - not sshd_google_authenticator | bool
+  notify: sshd_reload
+
+- name: Disable password auth in sshd PAM stack
+  ansible.builtin.replace:
+    path: /etc/pam.d/sshd
+    regexp: '^@include common-auth\s*$'
+    replace: '# @include common-auth  # disabled for pubkey+TOTP 2FA'
+  when:
+    - sshd_google_authenticator | bool
+  notify: sshd_reload
+
+- name: Enable password auth in sshd PAM stack (restore @include common-auth)
+  ansible.builtin.replace:
+    path: /etc/pam.d/sshd
+    regexp: '^\s*#?\s*@include\s+common-auth\b.*$'
+    replace: '@include common-auth'
+  when:
+    - not (sshd_google_authenticator | bool)
+  notify: sshd_reload

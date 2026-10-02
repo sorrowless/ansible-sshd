@@ -116,3 +116,5 @@ sshd_manage_selinux: false
 # sshd and systemd will try to bind the same port and one of them will fail.
 # Default depends on OS.
 sshd_systemd_unit: "{{ __sshd_systemd_unit }}"
+
+sshd_google_authenticator: false

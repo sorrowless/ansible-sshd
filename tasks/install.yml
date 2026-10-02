@@ -97,6 +97,9 @@
         mode: "{{ sshd_hostkey_mode }}"
       loop: "{{ __sshd_verify_hostkeys | from_json | list }}"
 
+- name: Configure Google Authenticator
+  ansible.builtin.include_tasks: google_authenticator.yml
+
 - name: Apply configuration
   vars:
     <<: *share_vars
